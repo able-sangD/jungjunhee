@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>장애물 피하기 게임</title>
+    <style>
+        #game-container {
+            width: 400px;
+            height: 400px;
+            border: 1px solid #000;
+            position: relative;
+            background-image: url(스쿠마미즈시.png); /* 이미지 파일 경로를 지정하세요 */
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        #player {
+            width: 30px;
+            height: 30px;
+            background-color: blue;
+            position: absolute;
+            bottom: 0;
+            left: 50%; /* 가운데로 이동 */
+            transform: translateX(-50%); /* 가운데 정렬 */
+        }
+        #obstacle {
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+        }
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 18px;
+            color: white;
+        }
+        #current-score {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h1>장애물 피하기 게임</h1>
+    <div id="game-container">
+        <div id="player"></div>
+        <div id="obstacle"></div>
+        <div id="game-over">
+            <h2>게임 오버</h2>
+            <p>장애물에 부딪혔습니다. 점수: <span id="final-score">0</span></p>
+            <button onclick="restartGame()">재시작</button>
+        </div>
+        <p id="score">점수: <span id="current-score">0</span></p>
+    </div>
+    <script>
+        const player = document.getElementById("player");
+        const obstacle = document.getElementById("obstacle");
+        const gameOver = document.getElementById("game-over");
+        const finalScore = document.getElementById("final-score");
+        const currentScore = document.getElementById("current-score");
+        let playerPosition = 0;
+        let obstaclePosition = 400;
+        let isJumping = false;
+        let gameIsOver = false;
+        let score = 0; // 스코어 변수
+
+        document.addEventListener("keydown", jump);
+
+        function jump(event) {
+            if (event.keyCode === 32 && !isJumping && !gameIsOver) {
+                isJumping = true;
+                let jumpHeight = 0;
+                const jumpInterval = setInterval(() => {
+                    if (jumpHeight < 60) {
+                        playerPosition += 5;
+                        player.style.bottom = playerPosition + "px";
+                        jumpHeight += 5;
+                    } else {
+                        clearInterval(jumpInterval);
+                        const fallInterval = setInterval(() => {
+                            if (playerPosition > 0) {
+                                playerPosition -= 5;
+                                player.style.bottom = playerPosition + "px";
+                            } else {
+                                playerPosition = 0;
+                                player.style.bottom = playerPosition + "px";
+                                isJumping = false;
+                                clearInterval(fallInterval);
+                            }
+                        }, 30);
+                    }
+                }, 30);
+            }
+        }
+
+        function checkCollision() {
+            const playerRect = player.getBoundingClientRect();
+            const obstacleRect = obstacle.getBoundingClientRect();
+
+            if (
+                playerRect.left < obstacleRect.right &&
+                playerRect.right > obstacleRect.left &&
+                playerRect.bottom > obstacleRect.top &&
+                playerRect.top < obstacleRect.bottom
+            ) {
+                gameIsOver = true;
+                currentScore.style.display = "none";
+                gameOver.style.display = "block"; // 수정: "display" 오타 수정
+                finalScore.innerText = score;
+            }
+        }
+
+        function updateScore() {
+            currentScore.innerText = `점수: ${score}`;
+        }
+
+        function moveObstacle() {
+            obstaclePosition -= 5;
+            obstacle.style.right = obstaclePosition + "px";
+
+            if (obstaclePosition < 0) {
+                obstaclePosition = 400;
+                obstacle.style.right = obstaclePosition + "px";
+                score++;
+                updateScore();
+            }
+
+            checkCollision();
+
+            if (!gameIsOver) {
+                requestAnimationFrame(moveObstacle);
+            }
+        }
+
+        function restartGame() {
+            gameIsOver = false;
+            gameOver.style.display = "none";
+            currentScore.style.display = "block";
+            playerPosition = 0;
+            player.style.bottom = playerPosition + "px";
+            obstaclePosition = 400;
+            obstacle.style.right = obstaclePosition + "px";
+            score = 0;
+            currentScore.innerText = `점수: ${score}`;
+            requestAnimationFrame(moveObstacle);
+        }
+
+        // 게임 시작
+        requestAnimationFrame(moveObstacle);
+    </script>
+</body>
+</html>
